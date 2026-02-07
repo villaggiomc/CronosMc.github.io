@@ -3,164 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CronosMc | Minecraft Server</title>
+    <title>CronosMc | Home</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --primary: #5722c0; /* Un viola magico stile Cronos */
-            --secondary: #2ecc71; /* Verde Minecraft per lo stato online */
-            --dark: #121212;
-            --card-bg: #1e1e1e;
+            --mc-green: #55FF55;
+            --mc-dark-green: #2d8a2d;
+            --mc-dirt: #3d2b1f;
+            --mc-stone: #333333;
         }
 
         body {
             margin: 0;
-            padding: 0;
-            background-color: var(--dark);
+            background: #1a1a1a;
             color: white;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            overflow-x: hidden;
+            font-family: 'Segoe UI', sans-serif;
         }
 
-        /* Hero Section con Sfondo Minecraft */
+        /* Navbar in stile Minecraft */
+        nav {
+            background: var(--mc-dirt);
+            border-bottom: 4px solid var(--mc-dark-green);
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .nav-links a:hover { color: var(--mc-green); }
+
+        /* Hero con sfondo a blocchi */
         .hero {
-            height: 80vh;
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), 
-                        url('https://images.unsplash.com/photo-1627398242454-45a1465c2479?auto=format&fit=crop&w=1350&q=80'); /* Sostituisci con uno screenshot del tuo server */
+            height: 60vh;
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+                        url('https://wallpaperaccess.com/full/466315.jpg');
             background-size: cover;
             background-position: center;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            text-align: center;
-            border-bottom: 5px solid var(--primary);
+            border-bottom: 8px solid var(--mc-stone);
         }
 
         .hero h1 {
-            font-size: 5rem;
-            text-transform: uppercase;
-            letter-spacing: 5px;
-            margin-bottom: 0;
+            font-size: 4rem;
+            color: var(--mc-green);
             text-shadow: 4px 4px #000;
+            margin: 0;
         }
 
-        .server-ip {
-            background: rgba(0,0,0,0.5);
-            padding: 15px 30px;
-            border: 2px dashed var(--primary);
-            border-radius: 5px;
-            font-family: monospace;
-            font-size: 1.5rem;
+        .ip-box {
+            background: #000;
+            padding: 15px 25px;
+            border: 3px solid var(--mc-green);
             margin-top: 20px;
             cursor: pointer;
-            transition: 0.3s;
+            font-family: monospace;
         }
 
-        .server-ip:hover {
-            background: var(--primary);
-            transform: scale(1.05);
-        }
+        .section { padding: 50px 10%; text-align: center; }
 
-        /* Sezione Features */
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 50px 10%;
-            background: var(--dark);
-        }
-
-        .feature-card {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            transition: 0.3s;
-            border-bottom: 4px solid transparent;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-10px);
-            border-bottom: 4px solid var(--primary);
-        }
-
-        .feature-card i {
-            font-size: 3rem;
-            color: var(--primary);
-            margin-bottom: 15px;
-        }
-
-        /* Status Online */
-        .status-bar {
-            background: #000;
-            padding: 10px;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .online { color: var(--secondary); }
-
-        footer {
-            padding: 40px;
-            text-align: center;
-            background: #0a0a0a;
-            color: #555;
-        }
-
-        .copy-hint {
-            font-size: 0.8rem;
-            margin-top: 5px;
-            display: block;
-            color: #aaa;
-        }
+        footer { background: #000; padding: 20px; text-align: center; color: #666; }
     </style>
 </head>
 <body>
 
-    <div class="status-bar">
-        <i class="fas fa-circle online"></i> STATO: <span class="online">ONLINE</span> | Versione: 1.20.x
-    </div>
+    <nav>
+        <div style="font-size: 1.5rem; font-weight: bold;">CRONOS<span style="color:var(--mc-green)">MC</span></div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="staff.html">Staff</a>
+            <a href="#">Regolamento</a>
+        </div>
+    </nav>
 
-    <section class="hero">
+    <header class="hero">
         <h1>CRONOS MC</h1>
-        <p>L'avventura definitiva ha inizio qui.</p>
-        
-        <div class="server-ip" onclick="copyIP()">
-            play.cronosmc.it
-            <span class="copy-hint">Clicca per copiare l'IP</span>
-        </div>
+        <p>Entra nel server Minecraft più epico!</p>
+        <div class="ip-box" onclick="copyIP()">MC.CRONOSMC.IT</div>
+    </header>
+
+    <section class="section">
+        <h2>Perché sceglierci?</h2>
+        <p>Survival, Economia reale e una community pronta ad accoglierti.</p>
     </section>
 
-    <section class="features">
-        <div class="feature-card">
-            <i class="fas fa-khanda"></i>
-            <h3>Survival Custom</h3>
-            <p>Meccaniche uniche, dungeon e un'economia gestita totalmente dai giocatori.</p>
-        </div>
-        <div class="feature-card">
-            <i class="fas fa-users"></i>
-            <h3>Community Attiva</h3>
-            <p>Eventi settimanali, staff sempre presente e una community accogliente.</p>
-        </div>
-        <div class="feature-card">
-            <i class="fas fa-rocket"></i>
-            <h3>No Lag</h3>
-            <p>Hardware dedicato di ultima generazione per un'esperienza fluida a 20 TPS.</p>
-        </div>
-    </section>
-
-    <footer>
-        <p>&copy; 2026 CronosMc Network. Non affiliato con Mojang AB.</p>
-    </footer>
+    <footer>&copy; 2026 CronosMc Network</footer>
 
     <script>
         function copyIP() {
-            const ip = "play.cronosmc.it"; // Cambia questo con il tuo IP reale
-            navigator.clipboard.writeText(ip);
-            alert("IP copiato: " + ip + "\nIncollalo su Minecraft!");
+            navigator.clipboard.writeText("mc.cronosmc.it");
+            alert("IP Copiato! Incollalo su Minecraft.");
         }
     </script>
-
 </body>
 </html>
