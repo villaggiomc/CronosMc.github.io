@@ -2,170 +2,163 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Private Dash - Game Edition</title>
+    <title>Geometry Dash Privato - Game</title>
     <style>
-        :root { --primary: #8e2de2; --secondary: #4a00e0; }
-        body { 
-            margin: 0; background: #050510; color: white; 
-            font-family: 'Segoe UI', Arial, sans-serif; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; 
-        }
-        #ui-layer { text-align: center; z-index: 10; }
-        .menu-box { background: rgba(20, 20, 40, 0.95); padding: 30px; border-radius: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.8); border: 1px solid var(--primary); }
-        .level-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 20px; }
-        button { 
-            background: linear-gradient(45deg, var(--primary), var(--secondary)); border: none; color: white; 
-            padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s;
-        }
-        button:hover { transform: scale(1.1); box-shadow: 0 0 15px var(--primary); }
-        input[type="password"], input[type="color"], select { 
-            padding: 10px; border-radius: 5px; border: 1px solid #444; background: #111; color: white; margin: 10px;
-        }
-        canvas { 
-            display: none; background: #0a0a1a; border-bottom: 4px solid #fff; 
-            box-shadow: 0 0 50px rgba(0,0,0,0.5); 
-        }
-        .stats { position: absolute; top: 20px; left: 20px; font-size: 18px; display: none; }
+        :root { --accent: #00ffcc; --bg: #0a0a1a; }
+        body { margin: 0; background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+        .box { background: rgba(20, 20, 40, 0.9); padding: 30px; border-radius: 15px; border: 2px solid var(--accent); text-align: center; box-shadow: 0 0 20px var(--accent); }
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 20px 0; }
+        button { background: var(--accent); border: none; color: black; padding: 10px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        button:hover { transform: scale(1.1); filter: brightness(1.2); }
+        canvas { display: none; background: linear-gradient(to bottom, #0d0d1e, #1a1a2e); border-bottom: 4px solid white; cursor: crosshair; }
+        .hidden { display: none; }
+        #editor-ui { position: absolute; bottom: 20px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 10px; display: none; }
     </style>
 </head>
 <body>
 
-    <div id="ui-layer">
-        <div id="pass-screen" class="menu-box">
-            <h1>ACCESSO RISERVATO</h1>
-            <p>Inserisci la chiave per giocare</p>
-            <input type="password" id="password" placeholder="Password...">
-            <button onclick="checkPass()">ENTRA</button>
-        </div>
-
-        <div id="menu-screen" class="menu-box" style="display:none;">
-            <h1>MY DASH</h1>
-            <div style="background: #1a1a3a; padding: 15px; border-radius: 10px;">
-                <label>Colore:</label> <input type="color" id="pColor" value="#00ffff">
-                <label>Icona:</label> 
-                <select id="pShape">
-                    <option value="square">Cubo Classico</option>
-                    <option value="circle">Palla Rotante</option>
-                </select>
-            </div>
-            <h3>SELEZIONA DIFFICOLTÀ</h3>
-            <div class="level-grid" id="levels"></div>
-        </div>
+    <div id="pass-screen" class="box">
+        <h1>LOGIN PRIVATO</h1>
+        <input type="password" id="pass-input" placeholder="Password..." style="padding:10px; border-radius:5px;">
+        <button onclick="checkPass()">ENTRA</button>
     </div>
 
-    <div id="game-info" class="stats">LIVELLO: <span id="lvl-num">1</span></div>
+    <div id="menu-screen" class="box hidden">
+        <h1>MY DASH EDITOR</h1>
+        <div style="margin: 15px;">
+            Colore: <input type="color" id="pColor" value="#00ffcc">
+            Icona: <select id="pShape"><option value="square">Cubo</option><option value="circle">Palla</option></select>
+        </div>
+        <h3>LIVELLI PREDEFINITI</h3>
+        <div class="grid" id="lvl-grid"></div>
+        <hr>
+        <button onclick="openEditor()" style="background: #ffcc00;">MODALITÀ EDITOR</button>
+        <button id="play-custom" onclick="startLevel(-1)" style="display:none; background: #2ecc71;">GIOCA LIVELLO CREATO</button>
+    </div>
+
     <canvas id="gameCanvas" width="900" height="400"></canvas>
+    <div id="editor-ui">CLICK SUL PAVIMENTO PER SPINE | INVIO PER TESTARE | ESC PER USCIRE</div>
 
 <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
+    const passScreen = document.getElementById("pass-screen");
+    const menuScreen = document.getElementById("menu-screen");
     
-    // --- CONFIGURAZIONE ---
-    const PASS_SEGRETA = "game"; // Cambiala pure qui
     let gameActive = false;
-    let score = 0;
-    
+    let editorMode = false;
+    let customMap = JSON.parse(localStorage.getItem('gameCustomMap')) || [];
+    let obstacles = [];
+    let currentSpeed = 7;
+
     const player = {
         x: 100, y: 340, w: 40, h: 40,
         dy: 0, gravity: 0.9, jump: -15,
         ground: 340, rot: 0, isJumping: false,
-        color: "#00ffff", shape: "square"
+        color: "#00ffcc", shape: "square"
     };
 
-    // Generazione 10 Livelli: velocità crescente e ostacoli più densi
+    // Generazione 10 Livelli
     const levels = Array.from({length: 10}, (_, i) => ({
-        speed: 7 + (i * 1.5),
-        gap: 400 - (i * 20),
-        count: 10 + (i * 5)
+        speed: 7 + i,
+        map: Array.from({length: 5 + i}, (_, j) => ({ x: 600 + (j * (450 - (i*20))), w: 30, h: 45 }))
     }));
 
-    let obstacles = [];
-
     function checkPass() {
-        if(document.getElementById("password").value === PASS_SEGRETA) {
-            document.getElementById("pass-screen").style.display = "none";
-            document.getElementById("menu-screen").style.display = "block";
-            buildLevelMenu();
-        } else { alert("Accesso Negato"); }
+        if(document.getElementById("pass-input").value === "123") {
+            passScreen.classList.add("hidden");
+            menuScreen.classList.remove("hidden");
+            initMenu();
+        } else { alert("Password Errata"); }
     }
 
-    function buildLevelMenu() {
-        const container = document.getElementById("levels");
-        levels.forEach((l, i) => {
+    function initMenu() {
+        const grid = document.getElementById("lvl-grid");
+        grid.innerHTML = "";
+        levels.forEach((_, i) => {
             const btn = document.createElement("button");
             btn.innerText = i + 1;
-            btn.onclick = () => start(i);
-            container.appendChild(btn);
+            btn.onclick = () => startLevel(i);
+            grid.appendChild(btn);
         });
+        if(customMap.length > 0) document.getElementById("play-custom").style.display = "inline-block";
     }
 
-    function start(idx) {
+    function openEditor() {
+        editorMode = true;
+        gameActive = false;
+        obstacles = [...customMap];
+        menuScreen.classList.add("hidden");
+        canvas.style.display = "block";
+        document.getElementById("editor-ui").style.display = "block";
+        renderEditor();
+    }
+
+    function startLevel(idx) {
+        editorMode = false;
+        gameActive = true;
         player.color = document.getElementById("pColor").value;
         player.shape = document.getElementById("pShape").value;
         player.y = player.ground;
         player.dy = 0;
         player.rot = 0;
-        
-        document.getElementById("ui-layer").style.display = "none";
-        document.getElementById("game-info").style.display = "block";
-        document.getElementById("lvl-num").innerText = idx + 1;
-        canvas.style.display = "block";
-        
-        // Genera Mappa
-        const config = levels[idx];
-        obstacles = [];
-        for(let j = 0; j < config.count; j++) {
-            obstacles.push({
-                x: 1000 + (j * config.gap) + (Math.random() * 100),
-                w: 35, h: 45
-            });
+
+        if(idx === -1) {
+            obstacles = JSON.parse(JSON.stringify(customMap));
+            currentSpeed = 8;
+        } else {
+            obstacles = JSON.parse(JSON.stringify(levels[idx].map));
+            currentSpeed = levels[idx].speed;
         }
-        
-        gameActive = true;
-        speed = config.speed;
+
+        menuScreen.classList.add("hidden");
+        canvas.style.display = "block";
         update();
     }
 
-    function drawPlayer() {
-        ctx.save();
-        // Centro della rotazione sul personaggio
-        ctx.translate(player.x + player.w/2, player.y + player.h/2);
-        ctx.rotate(player.rot * Math.PI / 180);
+    canvas.addEventListener("mousedown", (e) => {
+        if(!editorMode) { jump(); return; }
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
         
-        ctx.fillStyle = player.color;
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = player.color;
+        const exist = obstacles.findIndex(o => Math.abs(o.x - mouseX) < 30);
+        if(exist > -1) obstacles.splice(exist, 1);
+        else obstacles.push({x: mouseX, w: 30, h: 45});
+        
+        customMap = [...obstacles];
+        localStorage.setItem('gameCustomMap', JSON.stringify(customMap));
+        renderEditor();
+    });
 
-        if(player.shape === "square") {
-            ctx.fillRect(-player.w/2, -player.h/2, player.w, player.h);
-            ctx.strokeStyle = "white";
-            ctx.lineWidth = 2;
-            ctx.strokeRect(-player.w/2, -player.h/2, player.w, player.h);
-        } else {
-            ctx.beginPath();
-            ctx.arc(0, 0, player.w/2, 0, Math.PI*2);
-            ctx.fill();
-            ctx.stroke();
-        }
-        ctx.restore();
+    function renderEditor() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawFloor();
+        obstacles.forEach(o => drawSpike(o.x, 380, o.w, o.h));
+        ctx.globalAlpha = 0.5;
+        ctx.fillStyle = player.color;
+        ctx.fillRect(player.x, player.ground, player.w, player.h);
+        ctx.globalAlpha = 1;
+    }
+
+    function drawFloor() {
+        ctx.strokeStyle = "white";
+        ctx.beginPath(); ctx.moveTo(0, 380); ctx.lineTo(canvas.width, 380); ctx.stroke();
+    }
+
+    function drawSpike(x, y, w, h) {
+        ctx.fillStyle = "#ff4444";
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + w/2, y - h);
+        ctx.lineTo(x + w, y);
+        ctx.fill();
     }
 
     function update() {
         if(!gameActive) return;
-
-        // Pulizia e Sfondo
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Effetto scorrimento pavimento
-        ctx.strokeStyle = "#333";
-        for(let i=0; i<20; i++) {
-            ctx.beginPath();
-            ctx.moveTo((i*50 - (Date.now()/10 % 50)), 385);
-            ctx.lineTo((i*50 - (Date.now()/10 % 50)) + 20, 385);
-            ctx.stroke();
-        }
+        drawFloor();
 
-        // Fisica
         player.dy += player.gravity;
         player.y += player.dy;
 
@@ -173,41 +166,36 @@
             player.y = player.ground;
             player.dy = 0;
             player.isJumping = false;
-            // Snapping rotazione al multiplo di 90 più vicino (effetto atterraggio perfetto)
             player.rot = Math.round(player.rot / 90) * 90;
+        } else { player.rot += 7; }
+
+        ctx.save();
+        ctx.translate(player.x + player.w/2, player.y + player.h/2);
+        ctx.rotate(player.rot * Math.PI / 180);
+        ctx.fillStyle = player.color;
+        if(player.shape === "square") {
+            ctx.fillRect(-player.w/2, -player.h/2, player.w, player.h);
+            ctx.strokeStyle = "white"; ctx.strokeRect(-player.w/2, -player.h/2, player.w, player.h);
         } else {
-            // Rotazione continua durante il salto
-            player.rot += 6; 
+            ctx.beginPath(); ctx.arc(0, 0, player.w/2, 0, Math.PI*2); ctx.fill();
         }
+        ctx.restore();
 
-        drawPlayer();
+        for(let i = obstacles.length-1; i >= 0; i--) {
+            obstacles[i].x -= currentSpeed;
+            drawSpike(obstacles[i].x, 380, obstacles[i].w, obstacles[i].h);
 
-        // Gestione Ostacoli
-        for(let i = obstacles.length - 1; i >= 0; i--) {
-            let o = obstacles[i];
-            o.x -= speed;
-
-            // Disegna Spina (Spike)
-            ctx.fillStyle = "#ff2255";
-            ctx.shadowColor = "#ff2255";
-            ctx.beginPath();
-            ctx.moveTo(o.x, 380);
-            ctx.lineTo(o.x + o.w/2, 380 - o.h);
-            ctx.lineTo(o.x + o.w, 380);
-            ctx.fill();
-
-            // Collisione (Hitbox leggermente più piccola per essere più permissivi)
-            if(player.x + 30 > o.x && player.x < o.x + o.w - 5 && player.y + 35 > 380 - o.h) {
-                gameOver();
+            if(player.x + 30 > obstacles[i].x && player.x < obstacles[i].x + obstacles[i].w - 5 && player.y + 35 > 380 - obstacles[i].h) {
+                gameActive = false;
+                alert("Game Over!");
+                exit();
             }
         }
 
-        // Vittoria
-        if(obstacles.length > 0 && obstacles[obstacles.length-1].x < -100) {
-            alert("LIVELLO COMPLETATO!");
-            resetUI();
+        if(obstacles.length > 0 && obstacles.every(o => o.x < -100)) {
+            alert("VITTORIA!");
+            exit();
         }
-
         requestAnimationFrame(update);
     }
 
@@ -218,24 +206,20 @@
         }
     }
 
-    function gameOver() {
+    function exit() {
         gameActive = false;
-        alert("Ops! Ritenta.");
-        resetUI();
-    }
-
-    function resetUI() {
-        gameActive = false;
+        editorMode = false;
         canvas.style.display = "none";
-        document.getElementById("game-info").style.display = "none";
-        document.getElementById("ui-layer").style.display = "block";
-        document.getElementById("menu-screen").style.display = "block";
+        menuScreen.classList.remove("hidden");
+        document.getElementById("editor-ui").style.display = "none";
+        initMenu();
     }
 
-    // Input
-    window.addEventListener("keydown", (e) => { if(e.code === "Space" || e.code === "ArrowUp") jump(); });
-    canvas.addEventListener("mousedown", jump);
-
+    window.addEventListener("keydown", (e) => {
+        if(e.code === "Space") jump();
+        if(e.code === "Enter" && editorMode) startLevel(-1);
+        if(e.code === "Escape") exit();
+    });
 </script>
 </body>
 </html>
